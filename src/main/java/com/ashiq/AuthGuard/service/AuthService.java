@@ -1,5 +1,7 @@
 package com.ashiq.AuthGuard.service;
 
+import com.ashiq.AuthGuard.dto.AuthResponse;
+import com.ashiq.AuthGuard.dto.LoginRequest;
 import com.ashiq.AuthGuard.dto.RegisterRequest;
 import com.ashiq.AuthGuard.dto.SetPasswordRequest;
 import com.ashiq.AuthGuard.entity.Role;
@@ -7,6 +9,8 @@ import com.ashiq.AuthGuard.entity.User;
 import com.ashiq.AuthGuard.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.*;
 
@@ -19,6 +23,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
 
     private final JwtService jwtService;
 
@@ -74,5 +79,27 @@ public class AuthService {
         userRepository.save(user);
 
         return "Password set and account activated.";
+    }
+
+    public AuthResponse login(LoginRequest loginRequest){
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
+            );
+        }catch (Exception ex){
+            throw new RuntimeException("Invalid email or password");
+        }
+
+        User user = userRepository.findByEmail(loginRequest.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Map<String, Object> claims = Map.of(
+                "email", user.getEmail(),
+                "role", user.getRole().name()
+        );
+
+        String accessToken = jwtService.generateAccessToken(claims);
+        String refreshToken = jwtService.generateRefreshToken(claims);
+
+        return new AuthResponse(accessToken, refreshToken);
     }
 }

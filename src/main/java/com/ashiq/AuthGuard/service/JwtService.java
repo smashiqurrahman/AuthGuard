@@ -32,7 +32,7 @@ public class JwtService {
     }
 
     public String generateRefreshToken(Map<String, Object> claims) {
-        Duration duration = Duration.parse("PT" + jwtProperties.getRefreshTokenExpiration());
+        Duration duration = jwtProperties.getRefreshTokenExpiration();
         return generateToken(claims, duration);
     }
 

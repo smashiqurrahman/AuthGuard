@@ -26,6 +26,6 @@ spring:
 app:
   jwt:
     secret: "zE@83w$GkPl1mvXqr9!Bd7TJ2g#sH5Lc"
-    access-token-expiration: 15m
-    refresh-token-expiration: 7d
-    verification-token-expiration: 30m
+    access-token-expiration: "PT15M"
+    refresh-token-expiration: "PT168H"  # 7 days = 168 hours
+    verification-token-expiration: "PT30M"
