@@ -1,14 +1,15 @@
 package com.ashiq.AuthGuard.service;
 
-import com.ashiq.AuthGuard.dto.AuthResponse;
-import com.ashiq.AuthGuard.dto.LoginRequest;
-import com.ashiq.AuthGuard.dto.RegisterRequest;
-import com.ashiq.AuthGuard.dto.SetPasswordRequest;
+import com.ashiq.AuthGuard.dto.*;
 import com.ashiq.AuthGuard.entity.Role;
 import com.ashiq.AuthGuard.entity.User;
+import com.ashiq.AuthGuard.helper.CommonFunction;
 import com.ashiq.AuthGuard.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
@@ -18,7 +19,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class AuthService {
+public class AuthService implements CommonFunction {
 
     private final UserRepository userRepository;
     private final EmailService emailService;
@@ -27,9 +28,11 @@ public class AuthService {
 
     private final JwtService jwtService;
 
-    public String register(RegisterRequest request) {
+    public ResponseEntity<?> register(RegisterRequest request) {
+        Response response = new Response();
+
         if (userRepository.existsByEmail(request.getEmail())) {
-            return "Email already exists";
+            return new ResponseEntity<>(getErrorResponse("Email already exists."), HttpStatus.CONFLICT);
         }
 
         User user = User.builder()
@@ -57,11 +60,13 @@ public class AuthService {
                 emailService.buildVerificationEmail(link)
         );
 
-        return "Registration successful. Please check your email to set your password.";
+        return new ResponseEntity<>(getSuccessResponse("Registration successful. Please check your email to set your password."), HttpStatus.CREATED);
     }
 
 
-    public String setPassword(SetPasswordRequest request) {
+    public ResponseEntity<?> setPassword(SetPasswordRequest request) {
+        Response response = new Response();
+
         if (!jwtService.isTokenValid(request.getToken())) {
             throw new RuntimeException("Invalid or expired token");
         }
@@ -78,15 +83,18 @@ public class AuthService {
         user.setEnabled(true);
         userRepository.save(user);
 
-        return "Password set and account activated.";
+        return new ResponseEntity<>(getSuccessResponse("Password set and account activated."), HttpStatus.OK);
     }
 
-    public AuthResponse login(LoginRequest loginRequest){
+    public ResponseEntity<?> login(LoginRequest loginRequest) {
+        Response<AuthResponse> response = new Response();
+        AuthResponse authResponse = new AuthResponse();
+
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
             );
-        }catch (Exception ex){
+        } catch (Exception ex) {
             throw new RuntimeException("Invalid email or password");
         }
 
@@ -100,6 +108,9 @@ public class AuthService {
         String accessToken = jwtService.generateAccessToken(claims);
         String refreshToken = jwtService.generateRefreshToken(claims);
 
-        return new AuthResponse(accessToken, refreshToken);
+        authResponse.setAccessToken(accessToken);
+        authResponse.setRefreshToken(refreshToken);
+        response.setObj(authResponse);
+        return new ResponseEntity<>(getSuccessResponse("Login successful", response), HttpStatus.OK);
     }
 }

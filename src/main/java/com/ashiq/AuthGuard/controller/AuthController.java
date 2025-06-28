@@ -17,19 +17,19 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody RegisterRequest request)
+    public ResponseEntity<?> register(@RequestBody RegisterRequest request)
     {
-        return ResponseEntity.ok(authService.register(request));
+        return authService.register(request);
     }
 
 
     @PostMapping("/set-password")
-    public ResponseEntity<String> setPassword(@RequestBody SetPasswordRequest request) {
-        return ResponseEntity.ok(authService.setPassword(request));
+    public ResponseEntity<?> setPassword(@RequestBody SetPasswordRequest request) {
+        return authService.setPassword(request);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest){
-        return ResponseEntity.ok(authService.login(loginRequest));
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest){
+        return authService.login(loginRequest);
     }
 }
