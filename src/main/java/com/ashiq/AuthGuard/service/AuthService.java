@@ -8,6 +8,7 @@ import com.ashiq.AuthGuard.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,7 @@ import org.springframework.security.crypto.password.*;
 
 import java.util.Map;
 import java.util.Objects;
+import org.slf4j.Logger;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +31,8 @@ public class AuthService implements CommonFunction {
     private final AuthenticationManager authenticationManager;
 
     private final JwtService jwtService;
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
     public ResponseEntity<?> register(RegisterRequest request) {
         Response response = new Response();
@@ -89,6 +93,10 @@ public class AuthService implements CommonFunction {
     }
 
     public ResponseEntity<?> login(LoginRequest loginRequest) {
+
+        // Logging use
+        logger.info("Logger..................Attempting to authenticate user with email: {} ", loginRequest.getEmail());
+
         Response<AuthResponse> response = new Response<>();
         AuthResponse authResponse = new AuthResponse();
 
