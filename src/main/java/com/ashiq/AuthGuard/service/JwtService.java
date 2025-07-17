@@ -4,6 +4,7 @@ import com.ashiq.AuthGuard.config.JwtProperties;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -49,7 +50,7 @@ public class JwtService {
                 .getBody();
     }
 
-    public boolean isTokenValid(String token) {
+    public boolean isTokenValid(String token, UserDetails userDetails) {
         try {
             extractAllClaims(token);
             return true;
@@ -61,5 +62,15 @@ public class JwtService {
     private Key getSigningKey() {
         byte[] keyBytes = jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    public String extractEmailFromToken(String jwt) {
+        Claims claims = extractAllClaims(jwt);
+        return claims.get("email", String.class);
+    }
+
+    public String extractUsername(String jwt) {
+        Claims claims = extractAllClaims(jwt);
+        return claims.getSubject();
     }
 }

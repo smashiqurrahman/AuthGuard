@@ -7,8 +7,9 @@ import com.ashiq.AuthGuard.helper.CommonFunction;
 import com.ashiq.AuthGuard.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.ObjectUtils;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.*;
 
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -67,17 +69,17 @@ public class AuthService implements CommonFunction {
     public ResponseEntity<?> setPassword(SetPasswordRequest request) {
         Response response = new Response();
 
-        if (!jwtService.isTokenValid(request.getToken())) {
-            throw new RuntimeException("Invalid or expired token");
-        }
-
         Claims claims = jwtService.extractAllClaims(request.getToken());
-
         String email = claims.get("email", String.class);
+
         if (email == null) throw new RuntimeException("Token missing email");
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!jwtService.isTokenValid(request.getToken(), user)) {
+            throw new RuntimeException("Invalid or expired token");
+        }
 
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setEnabled(true);
@@ -87,7 +89,7 @@ public class AuthService implements CommonFunction {
     }
 
     public ResponseEntity<?> login(LoginRequest loginRequest) {
-        Response<AuthResponse> response = new Response();
+        Response<AuthResponse> response = new Response<>();
         AuthResponse authResponse = new AuthResponse();
 
         try {
@@ -113,4 +115,40 @@ public class AuthService implements CommonFunction {
         response.setObj(authResponse);
         return new ResponseEntity<>(getSuccessResponse("Login successful", response), HttpStatus.OK);
     }
+
+    public ResponseEntity<?> regenerateToken(HttpHeaders httpHeaders) {
+        String token = Objects.requireNonNull(httpHeaders.get("Authorization")).get(0);
+        String jwt = token.substring(7); // Remove "Bearer " prefix
+
+        String email = jwtService.extractEmailFromToken(jwt);
+
+        User user = userRepository.findByEmailAndEnabledTrueAndLockedFalse(email);
+
+        if (ObjectUtils.isEmpty(user)) {
+            return new ResponseEntity<>(getErrorResponse("User not found or account is not active."), HttpStatus.NOT_FOUND);
+        }
+
+        // Now that user is available, we can validate the token
+        if (!jwtService.isTokenValid(jwt, user)) {
+            return new ResponseEntity<>(getErrorResponse("Invalid or expired token."), HttpStatus.UNAUTHORIZED);
+        }
+
+        Map<String, Object> claims = Map.of(
+                "email", user.getEmail(),
+                "role", user.getRole().name()
+        );
+
+        String newAccessToken = jwtService.generateAccessToken(claims);
+        String newRefreshToken = jwtService.generateRefreshToken(claims);
+
+        AuthResponse authResponse = new AuthResponse();
+        authResponse.setAccessToken(newAccessToken);
+        authResponse.setRefreshToken(newRefreshToken);
+
+        Response<AuthResponse> response = new Response<>();
+        response.setObj(authResponse);
+
+        return new ResponseEntity<>(getSuccessResponse("Token regenerated successfully", response), HttpStatus.OK);
+    }
+
 }
