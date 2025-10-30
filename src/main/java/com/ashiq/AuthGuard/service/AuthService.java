@@ -44,7 +44,7 @@ public class AuthService implements CommonFunction {
         User user = User.builder()
                 .email(request.getEmail())
                 .fullName(request.getFullName())
-                .role(Role.CUSTOMER)
+                .role(Role.ROLE_CUSTOMER)
                 .enabled(false)
                 .locked(false)
                 .build();

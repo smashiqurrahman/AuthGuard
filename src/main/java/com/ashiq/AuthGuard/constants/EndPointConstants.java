@@ -5,4 +5,6 @@ public interface EndPointConstants {
 
     String AUTH_REGENERATE_TOKEN = "/regenerate-token";
 
+    String AUTH_REFRESH_TOKEN = "/refresh-token";
+
 }
