@@ -72,6 +72,6 @@ public class JwtService {
 
     public String extractUsername(String jwt) {
         Claims claims = extractAllClaims(jwt);
-        return claims.get("email", String.class);
+        return claims.getSubject();
     }
 }
