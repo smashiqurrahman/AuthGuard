@@ -13,6 +13,7 @@ public class TestPermissionController {
     @GetMapping(EndPointConstants.USER_VIEW)
     @PreAuthorize("hasAuthority('USER_VIEW')")
     public ResponseEntity<String> viewUser() {
+        System.out.println("✅ Inside viewUser endpoint");
         return ResponseEntity.ok("✅ USER_VIEW permission passed!");
     }
 

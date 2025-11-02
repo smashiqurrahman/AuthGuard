@@ -22,6 +22,7 @@ public class JwtService {
     public String generateToken(Map<String, Object> claims, Duration duration) {
         return Jwts.builder()
                 .setClaims(claims)
+                .setSubject((String) claims.get("email"))
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + duration.toMillis()))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
@@ -71,6 +72,6 @@ public class JwtService {
 
     public String extractUsername(String jwt) {
         Claims claims = extractAllClaims(jwt);
-        return claims.getSubject();
+        return claims.get("email", String.class);
     }
 }

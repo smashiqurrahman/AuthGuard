@@ -38,6 +38,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
         final String username;
+        List<String> rawAuthorities = null; // ✅ আগে থেকেই declare
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -56,7 +57,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
                 // ✅ Step 2: Extract authorities from JWT claims
                 Claims claims = jwtService.extractAllClaims(jwt);
-                List<String> rawAuthorities = claims.get("authorities", List.class); // 🔥 new line
+                rawAuthorities = claims.get("authorities", List.class); // ✅ assign to previously declared var
+
                 List<GrantedAuthority> authorities = rawAuthorities.stream()
                         .map(SimpleGrantedAuthority::new)
                         .collect(Collectors.toList());
@@ -66,7 +68,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                         new UsernamePasswordAuthenticationToken(
                                 userDetails,
                                 null,
-                                authorities // ✅ Previously: userDetails.getAuthorities()
+                                authorities
                         );
 
                 authToken.setDetails(
@@ -77,6 +79,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
         }
 
+        // ✅ Debugging logs
+        System.out.println("➡️ JWT Received: " + jwt);
+        System.out.println("📛 Extracted Username: " + username);
+        System.out.println("🧾 Authorities from token: " + rawAuthorities);
+        System.out.println("✅ Security Context Set: " + SecurityContextHolder.getContext().getAuthentication());
+
         filterChain.doFilter(request, response);
     }
+
 }
