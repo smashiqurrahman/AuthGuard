@@ -1,5 +1,6 @@
 package com.ashiq.AuthGuard.entity;
 
+import com.ashiq.AuthGuard.constants.PermissionType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -15,6 +16,6 @@ public class Permission {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Enumerated(EnumType.STRING)
     @Column(unique = true, nullable = false)
-    private String name;
-}
+    private PermissionType name;}

@@ -42,18 +42,11 @@ public class User implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Set<GrantedAuthority> authorities = new HashSet<>();
-
-        if (this.getRole() != null) {
-            // role name should already be "ROLE_*"
-            authorities.add(new SimpleGrantedAuthority(this.getRole().getName()));
-
-            if (this.getRole().getPermissions() != null) {
-                this.getRole().getPermissions().forEach(p ->
-                        authorities.add(new SimpleGrantedAuthority(p.getName()))
-                );
-            }
-        }
-
+        // role
+        authorities.add(new SimpleGrantedAuthority(role.getName()));
+        // permissions
+        role.getPermissions()
+                .forEach(p -> authorities.add(new SimpleGrantedAuthority(p.getName().name())));
         return authorities;
     }
 
