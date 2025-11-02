@@ -4,6 +4,7 @@ import com.ashiq.AuthGuard.dto.*;
 import com.ashiq.AuthGuard.entity.Role;
 import com.ashiq.AuthGuard.entity.User;
 import com.ashiq.AuthGuard.helper.CommonFunction;
+import com.ashiq.AuthGuard.repository.RoleRepository;
 import com.ashiq.AuthGuard.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,8 @@ public class AuthService implements CommonFunction {
 
     private final JwtService jwtService;
 
+    private final RoleRepository roleRepository;
+
     private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
     public ResponseEntity<?> register(RegisterRequest request) {
@@ -41,10 +44,13 @@ public class AuthService implements CommonFunction {
             return new ResponseEntity<>(getErrorResponse("Email already exists."), HttpStatus.CONFLICT);
         }
 
+        Role customerRole = roleRepository.findByName("ROLE_CUSTOMER")
+                .orElseThrow(() -> new RuntimeException("Default role not found"));
+
         User user = User.builder()
                 .email(request.getEmail())
                 .fullName(request.getFullName())
-                .role(Role.ROLE_CUSTOMER)
+                .role(customerRole)
                 .enabled(false)
                 .locked(false)
                 .build();
@@ -112,7 +118,7 @@ public class AuthService implements CommonFunction {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Map<String, Object> claims = Map.of(
                 "email", user.getEmail(),
-                "role", user.getRole().name()
+                "role", user.getRole().getName()
         );
 
         String accessToken = jwtService.generateAccessToken(claims);
@@ -143,7 +149,7 @@ public class AuthService implements CommonFunction {
 
         Map<String, Object> claims = Map.of(
                 "email", user.getEmail(),
-                "role", user.getRole().name()
+                "role", user.getRole().getName()
         );
 
         String newAccessToken = jwtService.generateAccessToken(claims);

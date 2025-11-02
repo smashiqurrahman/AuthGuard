@@ -3,10 +3,13 @@ package com.ashiq.AuthGuard.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -27,7 +30,8 @@ public class User implements UserDetails {
 
     private String password;
 
-    @Enumerated(EnumType.STRING)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id")
     private Role role;
 
     private boolean enabled = false;
@@ -37,7 +41,20 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.emptyList();
+        Set<GrantedAuthority> authorities = new HashSet<>();
+
+        if (this.getRole() != null) {
+            // role name should already be "ROLE_*"
+            authorities.add(new SimpleGrantedAuthority(this.getRole().getName()));
+
+            if (this.getRole().getPermissions() != null) {
+                this.getRole().getPermissions().forEach(p ->
+                        authorities.add(new SimpleGrantedAuthority(p.getName()))
+                );
+            }
+        }
+
+        return authorities;
     }
 
     @Override
