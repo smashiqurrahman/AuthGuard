@@ -18,8 +18,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.*;
 
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+
 import org.slf4j.Logger;
 
 @Service
@@ -100,8 +100,7 @@ public class AuthService implements CommonFunction {
 
     public ResponseEntity<?> login(LoginRequest loginRequest) {
 
-        // Logging use
-        logger.info("Logger..................Attempting to authenticate user with email: {} ", loginRequest.getEmail());
+        logger.info("Attempting to authenticate user with email: {} ", loginRequest.getEmail());
 
         Response<AuthResponse> response = new Response<>();
         AuthResponse authResponse = new AuthResponse();
@@ -116,23 +115,35 @@ public class AuthService implements CommonFunction {
 
         User user = userRepository.findByEmail(loginRequest.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        Map<String, Object> claims = Map.of(
-                "email", user.getEmail(),
-                "role", user.getRole().getName()
+
+        // 🔥 Step 1: collect authorities (roles + permissions)
+        Set<String> authorities = new HashSet<>();
+        authorities.add(user.getRole().getName()); // e.g. ROLE_ADMIN
+        user.getRole().getPermissions().forEach(p ->
+                authorities.add(p.getName().name()) // e.g. USER_VIEW, USER_CREATE
         );
 
+        // 🔥 Step 2: include authorities inside claims
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("email", user.getEmail());
+        claims.put("role", user.getRole().getName());
+        claims.put("authorities", authorities); // ✅ new important line
+
+        // 🔥 Step 3: generate JWT tokens with authorities
         String accessToken = jwtService.generateAccessToken(claims);
         String refreshToken = jwtService.generateRefreshToken(claims);
 
         authResponse.setAccessToken(accessToken);
         authResponse.setRefreshToken(refreshToken);
+
         response.setObj(authResponse);
+
         return new ResponseEntity<>(getSuccessResponse("Login successful", response), HttpStatus.OK);
     }
 
     public ResponseEntity<?> regenerateToken(HttpHeaders httpHeaders) {
         String token = Objects.requireNonNull(httpHeaders.get("Authorization")).get(0);
-        String jwt = token.substring(7); // Remove "Bearer " prefix
+        String jwt = token.substring(7);
 
         String email = jwtService.extractEmailFromToken(jwt);
 
@@ -142,16 +153,24 @@ public class AuthService implements CommonFunction {
             return new ResponseEntity<>(getErrorResponse("User not found or account is not active."), HttpStatus.NOT_FOUND);
         }
 
-        // Now that user is available, we can validate the token
         if (!jwtService.isTokenValid(jwt, user)) {
             return new ResponseEntity<>(getErrorResponse("Invalid or expired token."), HttpStatus.UNAUTHORIZED);
         }
 
-        Map<String, Object> claims = Map.of(
-                "email", user.getEmail(),
-                "role", user.getRole().getName()
+        // 🔥 Step 1: include authorities again
+        Set<String> authorities = new HashSet<>();
+        authorities.add(user.getRole().getName());
+        user.getRole().getPermissions().forEach(p ->
+                authorities.add(p.getName().name())
         );
 
+        // 🔥 Step 2: build claims
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("email", user.getEmail());
+        claims.put("role", user.getRole().getName());
+        claims.put("authorities", authorities); // ✅ important
+
+        // 🔥 Step 3: generate fresh tokens
         String newAccessToken = jwtService.generateAccessToken(claims);
         String newRefreshToken = jwtService.generateRefreshToken(claims);
 
@@ -164,5 +183,6 @@ public class AuthService implements CommonFunction {
 
         return new ResponseEntity<>(getSuccessResponse("Token regenerated successfully", response), HttpStatus.OK);
     }
+
 
 }
