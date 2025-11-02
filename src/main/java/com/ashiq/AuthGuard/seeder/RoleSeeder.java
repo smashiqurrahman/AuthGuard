@@ -10,10 +10,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Component
 @Order(2)
@@ -27,26 +24,30 @@ public class RoleSeeder implements CommandLineRunner {
     public void run(String... args) {
         List<Permission> allPermissions = permissionRepository.findAll();
 
-        // ADMIN → all permission
+        // ✅ ROLE_ADMIN → ALL PERMISSION
         createRoleIfNotExists("ROLE_ADMIN", new HashSet<>(allPermissions));
 
-        // USER → USER_VIEW only
-        createRoleIfNotExists("ROLE_USER", Set.of(getPermission(PermissionType.USER_VIEW)));
+        // ✅ ROLE_USER → USER_VIEW
+        createRoleIfNotExists("ROLE_USER", Set.of(
+                getPermission(PermissionType.USER_VIEW)
+        ));
 
-        // MANAGER → USER_VIEW, USER_UPDATE
+        // ✅ ROLE_MANAGER → USER_VIEW, USER_UPDATE
         createRoleIfNotExists("ROLE_MANAGER", Set.of(
                 getPermission(PermissionType.USER_VIEW),
                 getPermission(PermissionType.USER_UPDATE)
         ));
 
-        // SUPPORT → USER_VIEW, ROLE_VIEW
+        // ✅ ROLE_SUPPORT → USER_VIEW, ROLE_VIEW
         createRoleIfNotExists("ROLE_SUPPORT", Set.of(
                 getPermission(PermissionType.USER_VIEW),
                 getPermission(PermissionType.ROLE_VIEW)
         ));
 
-        // VENDOR → USER_VIEW only
-        createRoleIfNotExists("ROLE_VENDOR", Set.of(getPermission(PermissionType.USER_VIEW)));
+        // ✅ ROLE_VENDOR → USER_VIEW
+        createRoleIfNotExists("ROLE_VENDOR", Set.of(
+                getPermission(PermissionType.USER_VIEW)
+        ));
     }
 
     private void createRoleIfNotExists(String roleName, Set<Permission> permissions) {
@@ -62,6 +63,6 @@ public class RoleSeeder implements CommandLineRunner {
 
     private Permission getPermission(PermissionType type) {
         return permissionRepository.findByName(type)
-                .orElseThrow(() -> new RuntimeException("Permission not found: " + type));
+                .orElseThrow(() -> new RuntimeException("❌ Permission not found: " + type));
     }
 }
