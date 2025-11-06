@@ -46,7 +46,7 @@ public class User implements UserDetails {
         authorities.add(new SimpleGrantedAuthority(role.getName()));
         // permissions
         role.getPermissions()
-                .forEach(p -> authorities.add(new SimpleGrantedAuthority(p.getName().name())));
+                .forEach(p -> authorities.add(new SimpleGrantedAuthority(p.getName())));
         return authorities;
     }
 

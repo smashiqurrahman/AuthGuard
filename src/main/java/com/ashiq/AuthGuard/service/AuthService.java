@@ -120,7 +120,7 @@ public class AuthService implements CommonFunction {
         Set<String> authorities = new HashSet<>();
         authorities.add(user.getRole().getName()); // e.g. ROLE_ADMIN
         user.getRole().getPermissions().forEach(p ->
-                authorities.add(p.getName().name()) // e.g. USER_VIEW, USER_CREATE
+                authorities.add(p.getName()) // e.g. USER_VIEW, USER_CREATE
         );
 
         // 🔥 Step 2: include authorities inside claims
@@ -161,7 +161,7 @@ public class AuthService implements CommonFunction {
         Set<String> authorities = new HashSet<>();
         authorities.add(user.getRole().getName());
         user.getRole().getPermissions().forEach(p ->
-                authorities.add(p.getName().name())
+                authorities.add(p.getName())
         );
 
         // 🔥 Step 2: build claims

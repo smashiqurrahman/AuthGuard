@@ -18,9 +18,9 @@ public class PermissionSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) {
         for (PermissionType type : PermissionType.values()) {
-            permissionRepository.findByName(type)
+            permissionRepository.findByName(type.name()) // ✅ String এ convert করা হয়েছে
                     .orElseGet(() -> permissionRepository.save(
-                            Permission.builder().name(type).build()
+                            Permission.builder().name(type.name()).build()
                     ));
         }
         System.out.println("✅ PermissionSeeder completed");

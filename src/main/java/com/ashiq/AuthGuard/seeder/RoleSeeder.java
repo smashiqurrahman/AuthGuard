@@ -62,7 +62,7 @@ public class RoleSeeder implements CommandLineRunner {
     }
 
     private Permission getPermission(PermissionType type) {
-        return permissionRepository.findByName(type)
+        return permissionRepository.findByName(type.name())
                 .orElseThrow(() -> new RuntimeException("❌ Permission not found: " + type));
     }
 }
