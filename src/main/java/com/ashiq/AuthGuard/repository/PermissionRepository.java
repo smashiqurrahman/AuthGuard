@@ -1,6 +1,5 @@
 package com.ashiq.AuthGuard.repository;
 
-import com.ashiq.AuthGuard.constants.PermissionType;
 import com.ashiq.AuthGuard.entity.Permission;
 import org.springframework.data.jpa.repository.JpaRepository;
 

@@ -17,12 +17,40 @@ public class PermissionSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        for (PermissionType type : PermissionType.values()) {
-            permissionRepository.findByName(type.name()) // ✅ String এ convert করা হয়েছে
-                    .orElseGet(() -> permissionRepository.save(
-                            Permission.builder().name(type.name()).build()
-                    ));
-        }
-        System.out.println("✅ PermissionSeeder completed");
+        // USER permissions
+        saveIfNotExists("/api/test/user/view", "GET", PermissionType.USER_VIEW.name(), "auth-service", true);
+        saveIfNotExists("/api/test/user/create", "POST", PermissionType.USER_CREATE.name(), "auth-service", true);
+        saveIfNotExists("/api/test/user/update", "PUT", PermissionType.USER_UPDATE.name(), "auth-service", true);
+        saveIfNotExists("/api/test/user/delete", "DELETE", PermissionType.USER_DELETE.name(), "auth-service", true);
+
+        // ROLE permissions
+        saveIfNotExists("/api/test/role/view", "GET", PermissionType.ROLE_VIEW.name(), "auth-service", true);
+        saveIfNotExists("/api/test/role/create", "POST", PermissionType.ROLE_CREATE.name(), "auth-service", true);
+        saveIfNotExists("/api/test/role/update", "PUT", PermissionType.ROLE_UPDATE.name(), "auth-service", true);
+        saveIfNotExists("/api/test/role/delete", "DELETE", PermissionType.ROLE_DELETE.name(), "auth-service", true);
+
+        System.out.println("✅ PermissionSeeder completed successfully!");
+    }
+
+    /**
+     * Save permission in DB if not already exists.
+     *
+     * @param endpoint The API endpoint path
+     * @param method The HTTP method (GET, POST, etc.)
+     * @param name The permission name (Enum string)
+     * @param service The service name (e.g., auth-service)
+     * @param isOrg Whether it's organization-level permission
+     */
+    private void saveIfNotExists(String endpoint, String method, String name, String service, boolean isOrg) {
+        permissionRepository.findByName(name)
+                .orElseGet(() -> permissionRepository.save(
+                        Permission.builder()
+                                .apiEndPoint(endpoint)
+                                .method(method)
+                                .name(name)
+                                .serviceName(service)
+                                .isOrgPermission(isOrg)
+                                .build()
+                ));
     }
 }

@@ -1,6 +1,7 @@
 package com.ashiq.AuthGuard.seeder;
 
 import com.ashiq.AuthGuard.constants.PermissionType;
+import com.ashiq.AuthGuard.constants.RoleType;
 import com.ashiq.AuthGuard.entity.Permission;
 import com.ashiq.AuthGuard.entity.Role;
 import com.ashiq.AuthGuard.repository.PermissionRepository;
@@ -10,7 +11,9 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Component
 @Order(2)
@@ -22,32 +25,39 @@ public class RoleSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+
         List<Permission> allPermissions = permissionRepository.findAll();
 
-        // ✅ ROLE_ADMIN → ALL PERMISSION
-        createRoleIfNotExists("ROLE_ADMIN", new HashSet<>(allPermissions));
+        // ✅ Super Admin → All Permissions
+        createRoleIfNotExists(RoleType.ROLE_SUPER_ADMIN.name(), new HashSet<>(allPermissions));
 
-        // ✅ ROLE_USER → USER_VIEW
-        createRoleIfNotExists("ROLE_USER", Set.of(
-                getPermission(PermissionType.USER_VIEW)
-        ));
-
-        // ✅ ROLE_MANAGER → USER_VIEW, USER_UPDATE
-        createRoleIfNotExists("ROLE_MANAGER", Set.of(
+        // ✅ Admin → User & Role management
+        createRoleIfNotExists(RoleType.ROLE_ADMIN.name(), Set.of(
                 getPermission(PermissionType.USER_VIEW),
-                getPermission(PermissionType.USER_UPDATE)
+                getPermission(PermissionType.USER_CREATE),
+                getPermission(PermissionType.USER_UPDATE),
+                getPermission(PermissionType.ROLE_VIEW),
+                getPermission(PermissionType.ROLE_CREATE),
+                getPermission(PermissionType.ROLE_UPDATE)
         ));
 
-        // ✅ ROLE_SUPPORT → USER_VIEW, ROLE_VIEW
-        createRoleIfNotExists("ROLE_SUPPORT", Set.of(
+        // ✅ Support → View-only access
+        createRoleIfNotExists(RoleType.ROLE_SUPPORT.name(), Set.of(
                 getPermission(PermissionType.USER_VIEW),
                 getPermission(PermissionType.ROLE_VIEW)
         ));
 
-        // ✅ ROLE_VENDOR → USER_VIEW
-        createRoleIfNotExists("ROLE_VENDOR", Set.of(
+        // ✅ Vendor → Only view
+        createRoleIfNotExists(RoleType.ROLE_VENDOR.name(), Set.of(
                 getPermission(PermissionType.USER_VIEW)
         ));
+
+        // ✅ Customer → Minimal access (optional)
+        createRoleIfNotExists(RoleType.ROLE_CUSTOMER.name(), Set.of(
+                getPermission(PermissionType.USER_VIEW)
+        ));
+
+        System.out.println("✅ RoleSeeder completed successfully!");
     }
 
     private void createRoleIfNotExists(String roleName, Set<Permission> permissions) {
@@ -63,6 +73,6 @@ public class RoleSeeder implements CommandLineRunner {
 
     private Permission getPermission(PermissionType type) {
         return permissionRepository.findByName(type.name())
-                .orElseThrow(() -> new RuntimeException("❌ Permission not found: " + type));
+                .orElseThrow(() -> new RuntimeException("❌ Permission not found: " + type.name()));
     }
 }
