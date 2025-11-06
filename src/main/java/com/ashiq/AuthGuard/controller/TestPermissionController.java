@@ -1,8 +1,9 @@
 package com.ashiq.AuthGuard.controller;
 
 import com.ashiq.AuthGuard.constants.EndPointConstants;
+import com.ashiq.AuthGuard.util.SecurityUtil;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -11,65 +12,52 @@ public class TestPermissionController {
 
     // ---------- USER Permissions ----------
     @GetMapping(EndPointConstants.USER_VIEW)
-    @PreAuthorize("hasAuthority('USER_VIEW')")
     public ResponseEntity<String> viewUser() {
-        System.out.println("✅ Inside viewUser endpoint");
-        return ResponseEntity.ok("✅ USER_VIEW permission passed!");
+        if (!SecurityUtil.hasPermission("USER_VIEW")) {
+            return new ResponseEntity<>("❌ USER_VIEW permission required", HttpStatus.FORBIDDEN);
+        }
+        return ResponseEntity.ok("✅ USER_VIEW granted");
     }
 
     @PostMapping(EndPointConstants.USER_CREATE)
-    @PreAuthorize("hasAuthority('USER_CREATE')")
     public ResponseEntity<String> createUser() {
-        return ResponseEntity.ok("✅ USER_CREATE permission passed!");
-    }
-
-    @PutMapping(EndPointConstants.USER_UPDATE)
-    @PreAuthorize("hasAuthority('USER_UPDATE')")
-    public ResponseEntity<String> updateUser() {
-        return ResponseEntity.ok("✅ USER_UPDATE permission passed!");
-    }
-
-    @DeleteMapping(EndPointConstants.USER_DELETE)
-    @PreAuthorize("hasAuthority('USER_DELETE')")
-    public ResponseEntity<String> deleteUser() {
-        return ResponseEntity.ok("✅ USER_DELETE permission passed!");
+        if (!SecurityUtil.hasPermission("USER_CREATE")) {
+            return new ResponseEntity<>("❌ USER_CREATE permission required", HttpStatus.FORBIDDEN);
+        }
+        return ResponseEntity.ok("✅ USER_CREATE granted");
     }
 
     // ---------- ROLE Permissions ----------
     @GetMapping(EndPointConstants.ROLE_VIEW)
-    @PreAuthorize("hasAuthority('ROLE_VIEW')")
     public ResponseEntity<String> viewRole() {
-        return ResponseEntity.ok("✅ ROLE_VIEW permission passed!");
+        if (!SecurityUtil.hasPermission("ROLE_VIEW")) {
+            return new ResponseEntity<>("❌ ROLE_VIEW permission required", HttpStatus.FORBIDDEN);
+        }
+        return ResponseEntity.ok("✅ ROLE_VIEW granted");
     }
 
     @PostMapping(EndPointConstants.ROLE_CREATE)
-    @PreAuthorize("hasAuthority('ROLE_CREATE')")
     public ResponseEntity<String> createRole() {
-        return ResponseEntity.ok("✅ ROLE_CREATE permission passed!");
+        if (!SecurityUtil.hasPermission("ROLE_CREATE")) {
+            return new ResponseEntity<>("❌ ROLE_CREATE permission required", HttpStatus.FORBIDDEN);
+        }
+        return ResponseEntity.ok("✅ ROLE_CREATE granted");
     }
 
-    @PutMapping(EndPointConstants.ROLE_UPDATE)
-    @PreAuthorize("hasAuthority('ROLE_UPDATE')")
-    public ResponseEntity<String> updateRole() {
-        return ResponseEntity.ok("✅ ROLE_UPDATE permission passed!");
-    }
-
-    @DeleteMapping(EndPointConstants.ROLE_DELETE)
-    @PreAuthorize("hasAuthority('ROLE_DELETE')")
-    public ResponseEntity<String> deleteRole() {
-        return ResponseEntity.ok("✅ ROLE_DELETE permission passed!");
-    }
-
-    // ---------- Role-based access test ----------
+    // ---------- Role-based testing ----------
     @GetMapping(EndPointConstants.ADMIN_ONLY)
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<String> adminOnly() {
-        return ResponseEntity.ok("🔐 ROLE_ADMIN access granted!");
+        if (!SecurityUtil.hasRole("ROLE_ADMIN")) {
+            return new ResponseEntity<>("❌ ROLE_ADMIN required", HttpStatus.FORBIDDEN);
+        }
+        return ResponseEntity.ok("🔐 ROLE_ADMIN granted");
     }
 
     @GetMapping(EndPointConstants.USER_ONLY)
-    @PreAuthorize("hasAuthority('ROLE_USER')")
     public ResponseEntity<String> userOnly() {
-        return ResponseEntity.ok("🔐 ROLE_USER access granted!");
+        if (!SecurityUtil.hasRole("ROLE_USER")) {
+            return new ResponseEntity<>("❌ ROLE_USER required", HttpStatus.FORBIDDEN);
+        }
+        return ResponseEntity.ok("🔐 ROLE_USER granted");
     }
 }
